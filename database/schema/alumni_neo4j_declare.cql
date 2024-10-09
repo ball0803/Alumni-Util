@@ -1,9 +1,11 @@
 LOAD CSV WITH HEADERS FROM 'file:///alumni_user.csv' AS row
+
 // Merge Faculty, Department, and Field Nodes (avoid duplication)
 MERGE (f:Faculty {name: row.faculty})
 MERGE (d:Department {name: row.department})
 MERGE (fld:Field {name: row.field})
 MERGE (st:StudentType {name: row.student_type})
+
 // Link Faculty to Department, and Department to Field, Field to Student Type
 MERGE (f)-[:HAS_DEPARTMENT]->(d)
 MERGE (d)-[:HAS_FIELD]->(fld)
@@ -13,13 +15,14 @@ MERGE (fld)-[:HAS_STUDENT_TYPE]->(st)
 MERGE (u:UserProfile {
     user_id: row.user_id,
     username: row.username,
-    user_password: row.password
+    user_password: row.password,
+    role: row.role
 })
 SET u.first_name = row.first_name,
     u.last_name = row.last_name,
     u.first_name_eng = row.first_name_eng,
     u.last_name_eng = row.last_name_eng,
-    u.DOB = date(row.DOB)
+    u.DOB = CASE WHEN row.DOB <> "" THEN date(row.DOB) ELSE NULL END,
     u.gender = row.gender,
     u.email = row.email,
     u.education_level = row.education_level,
@@ -27,29 +30,32 @@ SET u.first_name = row.first_name,
     u.graduate_year = toInteger(row.graduate_year),
     u.gpax = toFloat(row.gpax),
     u.profile_picture = row.profile_picture,
-    u.phone = CASE WHEN row.phone <> "" THEN row.phone ELSE NULL END,
-    u.linkedin = CASE WHEN row.linkedin <> "" THEN row.linkedin ELSE NULL END,
-    u.facebook = CASE WHEN row.facebook <> "" THEN row.facebook ELSE NULL END,
-    u.github = CASE WHEN row.github <> "" THEN row.github ELSE NULL END
+    u.phone = CASE WHEN row.phone IS NOT NULL AND row.phone <> "" THEN row.phone ELSE NULL END, // Handle NULL and empty strings
+    u.linkedin = CASE WHEN row.linkedin IS NOT NULL AND row.linkedin <> "" THEN row.linkedin ELSE NULL END,
+    u.facebook = CASE WHEN row.facebook IS NOT NULL AND row.facebook <> "" THEN row.facebook ELSE NULL END,
+    u.github = CASE WHEN row.github IS NOT NULL AND row.github <> "" THEN row.github ELSE NULL END
 
 // Connect User to Field and Student Type
 MERGE (u)-[:BELONGS_TO_FIELD]->(fld)
 MERGE (u)-[:BELONGS_TO_STUDENT_TYPE]->(st)
 
-// Merge Address if company is provided
+// Now use WITH to pass variables forward
 WITH u, row
-WHERE row.company <> ""
-MERGE (a:Company {company: row.company, address: row.workplace})
-MERGE (u)-[r:HAS_WORK_WITH]->(a)
-SET r.type = 'workplace',
-    r.job = row.job;
 
-WITH u, row
-WHERE row.internship <> ""
-MERGE (a:Company {company: row.company_internship, address: row.internship})
+// Merge Company if provided
+WHERE row.company IS NOT NULL AND row.company <> ""
+MERGE (a:Company {name: row.company, address: row.workplace})
 MERGE (u)-[r:HAS_WORK_WITH]->(a)
 SET r.type = 'workplace',
-    r.job = row.job_internship;
+    r.job = row.job
+
+// Handle internship details
+WITH u, row
+WHERE row.company_internship IS NOT NULL AND row.company_internship <> ""
+MERGE (a_intern:Company {name: row.company_internship, address: row.internship})
+MERGE (u)-[r_intern:HAS_INTERNSHIP_WITH]->(a_intern)
+SET r_intern.type = 'internship',
+    r_intern.job = row.job_internship;
 
 
 LOAD CSV WITH HEADERS FROM 'file:///user_post.csv' AS post_row
@@ -163,5 +169,18 @@ MERGE (receiver)-[:RECEIVED]->(m)
 
 WITH interaction_row, m
 WHERE interaction_row.reply_id IS NOT NULL
-MATCH (r:Comment {comment_id: toInteger(interaction_row.reply_id)})
+MATCH (r:Comment {comment_id: interaction_row.reply_id})
 CREATE (m)-[:REPLIES_TO]->(r);
+
+LOAD CSV WITH HEADERS FROM 'file:///user_friend.csv' AS row
+MATCH (u1:UserProfile {user_id: row.user1_id}), (u2:UserProfile {user_id: row.user2_id})
+MERGE (u1)-[:FRIEND]->(u2)
+MERGE (u2)-[:FRIEND]->(u1)
+
+
+CREATE INDEX user_id_index IF NOT EXISTS FOR (u:UserProfile) ON (u.user_id);
+CREATE INDEX post_id_index IF NOT EXISTS FOR (p:Post) ON (p.post_id);
+CREATE INDEX comment_id_index IF NOT EXISTS FOR (c:Comment) ON (c.comment_id);
+CREATE INDEX donation_id_index IF NOT EXISTS FOR (d:Donation) ON (d.donation_id);
+CREATE INDEX transaction_id_index IF NOT EXISTS FOR (t:Transaction) ON (t.transaction_id);
+CREATE INDEX message_id_index IF NOT EXISTS FOR (m:Message) ON (m.message_id);

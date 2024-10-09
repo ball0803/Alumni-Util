@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Test Plan">
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+        <collectionProp name="Arguments.arguments"/>
+      </elementProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+    </TestPlan>
+    <hashTree>
+      <BoltConnectionElement guiclass="TestBeanGUI" testclass="BoltConnectionElement" testname="Bolt Connection Configuration">
+        <stringProp name="boltUri">bolt://localhost:7687</stringProp>
+        <intProp name="maxConnectionPoolSize">100</intProp>
+        <stringProp name="password">Xq/S7j.vWAS5t9.qF/JEaEc\K</stringProp>
+        <stringProp name="username">neo4j</stringProp>
+      </BoltConnectionElement>
+      <hashTree/>
+      <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CSV Data Set Config">
+        <stringProp name="filename">C:/Program Files/apache-jmeter-5.6.3/bin/random_variable.csv</stringProp>
+        <stringProp name="fileEncoding">UTF-8</stringProp>
+        <stringProp name="variableNames">post_id, user_id</stringProp>
+        <boolProp name="ignoreFirstLine">false</boolProp>
+        <stringProp name="delimiter">,</stringProp>
+        <boolProp name="quotedData">false</boolProp>
+        <boolProp name="recycle">true</boolProp>
+        <boolProp name="stopThread">false</boolProp>
+        <stringProp name="shareMode">shareMode.all</stringProp>
+      </CSVDataSet>
+      <hashTree/>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group" enabled="true">
+        <intProp name="ThreadGroup.num_threads">10</intProp>
+        <intProp name="ThreadGroup.ramp_time">60</intProp>
+        <longProp name="ThreadGroup.duration">300</longProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+        <boolProp name="ThreadGroup.scheduler">true</boolProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
+          <intProp name="LoopController.loops">-1</intProp>
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <RandomVariableConfig guiclass="TestBeanGUI" testclass="RandomVariableConfig" testname="Random Variable" enabled="true">
+          <stringProp name="variableName">random_year</stringProp>
+          <stringProp name="outputFormat">0000</stringProp>
+          <stringProp name="minimumValue">2533</stringProp>
+          <stringProp name="maximumValue">2564</stringProp>
+          <stringProp name="randomSeed"></stringProp>
+          <boolProp name="perThread">true</boolProp>
+        </RandomVariableConfig>
+        <hashTree/>
+        <RandomController guiclass="RandomControlGui" testclass="RandomController" testname="Random Normal Controller">
+          <intProp name="InterleaveControl.style">1</intProp>
+        </RandomController>
+        <hashTree>
+          <BoltSampler guiclass="TestBeanGUI" testclass="BoltSampler" testname="All Post" enabled="true">
+            <stringProp name="accessMode">READ</stringProp>
+            <stringProp name="cypher">MATCH (u:UserProfile)-[:HAS_POST]-&gt;(p:Post {visibility: &quot;public&quot;}) RETURN u, p;</stringProp>
+            <stringProp name="params">{&quot;paramName&quot;:&quot;paramValue&quot;}</stringProp>
+            <boolProp name="recordQueryResults">false</boolProp>
+            <intProp name="txTimeout">60</intProp>
+            <stringProp name="database">neo4j</stringProp>
+          </BoltSampler>
+          <hashTree/>
+          <BoltSampler guiclass="TestBeanGUI" testclass="BoltSampler" testname="Post info" enabled="true">
+            <stringProp name="cypher">MATCH (u:UserProfile)&lt;-[:COMMENTED_BY]-(c:Comment)-[:COMMENTED_ON]-&gt;(p:Post {post_id: &quot;${user_id}&quot;})
+OPTIONAL MATCH (reply:Comment)-[:REPLIES_TO]-&gt;(c)
+OPTIONAL MATCH (replier:UserProfile)&lt;-[:COMMENTED_BY]-(reply)
+OPTIONAL MATCH (p)&lt;-[:LIKES]-(liker:UserProfile)
+RETURN u AS commenter,
+       c AS comment,
+       p AS post,
+       reply AS reply_comment,
+       replier AS replier_profile,
+       collect(liker) AS likers
+ORDER BY c.created_timestamp, reply.created_timestamp;</stringProp>
+            <stringProp name="params"></stringProp>
+            <boolProp name="recordQueryResults">false</boolProp>
+            <stringProp name="accessMode">READ</stringProp>
+            <stringProp name="database">neo4j</stringProp>
+            <intProp name="txTimeout">60</intProp>
+          </BoltSampler>
+          <hashTree/>
+          <BoltSampler guiclass="TestBeanGUI" testclass="BoltSampler" testname="Get User by Filter" enabled="true">
+            <stringProp name="cypher">MATCH (u:UserProfile {admit_year: ${random_year}, education_level: &apos;ปริญญาตรี&apos;}) RETURN u;</stringProp>
+            <stringProp name="params">{&quot;paramName&quot;:&quot;paramValue&quot;}</stringProp>
+            <boolProp name="recordQueryResults">false</boolProp>
+            <stringProp name="accessMode">READ</stringProp>
+            <stringProp name="database">neo4j</stringProp>
+            <intProp name="txTimeout">60</intProp>
+          </BoltSampler>
+          <hashTree/>
+          <BoltSampler guiclass="TestBeanGUI" testclass="BoltSampler" testname="Get all User Message" enabled="true">
+            <stringProp name="cypher">MATCH (u:UserProfile {user_id: &quot;${user_id}&quot;})
+
+MATCH (u)-[:SENT]-&gt;(sent:Message)
+MATCH (sent)&lt;-[:RECEIVED]-(receiver:UserProfile)
+OPTIONAL MATCH (sent)&lt;-[:REPLIES_TO]-(reply:Message)
+WITH u, sent, receiver, reply
+
+
+MATCH (u)-[:RECEIVED]-&gt;(received:Message)
+MATCH (received)&lt;-[:SENT]-(sender:UserProfile)
+RETURN u AS user,
+       collect(sent) AS sent_messages,
+       collect(receiver) AS sent_to_users,
+       collect(reply) AS replies,
+       collect(received) AS received_messages,
+       collect(sender) AS received_from_users;
+</stringProp>
+            <stringProp name="params"></stringProp>
+            <boolProp name="recordQueryResults">false</boolProp>
+            <stringProp name="accessMode">READ</stringProp>
+            <stringProp name="database">neo4j</stringProp>
+            <intProp name="txTimeout">60</intProp>
+          </BoltSampler>
+          <hashTree/>
+        </hashTree>
+        <RandomController guiclass="RandomControlGui" testclass="RandomController" testname="Random Graph Controller" enabled="false">
+          <intProp name="InterleaveControl.style">1</intProp>
+        </RandomController>
+        <hashTree>
+          <BoltSampler guiclass="TestBeanGUI" testclass="BoltSampler" testname="Find Shortest path to user" enabled="true">
+            <stringProp name="cypher">MATCH (user1:UserProfile {user_id: &quot;329537&quot;}), (user2:UserProfile {user_id: &quot;${user_id}&quot;})
+MATCH path = shortestPath((user1)-[:FRIEND*]-(user2))
+RETURN path;</stringProp>
+            <stringProp name="params">{&quot;paramName&quot;:&quot;paramValue&quot;}</stringProp>
+            <boolProp name="recordQueryResults">false</boolProp>
+            <stringProp name="accessMode">WRITE</stringProp>
+            <stringProp name="database">neo4j</stringProp>
+            <intProp name="txTimeout">60</intProp>
+          </BoltSampler>
+          <hashTree/>
+          <BoltSampler guiclass="TestBeanGUI" testclass="BoltSampler" testname="Find friend of a friend" enabled="true">
+            <stringProp name="cypher">MATCH (u:UserProfile {user_id: &quot;${user_id}&quot;})-[:FRIEND]-&gt;(friend)-[:FRIEND]-&gt;(fof)
+RETURN DISTINCT fof;
+</stringProp>
+            <stringProp name="params">{&quot;paramName&quot;:&quot;paramValue&quot;}</stringProp>
+            <boolProp name="recordQueryResults">false</boolProp>
+            <stringProp name="accessMode">WRITE</stringProp>
+            <stringProp name="database">neo4j</stringProp>
+            <intProp name="txTimeout">60</intProp>
+          </BoltSampler>
+          <hashTree/>
+          <BoltSampler guiclass="TestBeanGUI" testclass="BoltSampler" testname="Recommend post" enabled="true">
+            <stringProp name="cypher">MATCH (u:UserProfile {user_id: &quot;${user_id}&quot;})-[:FRIEND]-&gt;(friend)-[:LIKES]-&gt;(p:Post)
+WHERE NOT (u)-[:LIKES]-&gt;(p)
+RETURN p, COUNT(friend) AS likes
+ORDER BY likes DESC;</stringProp>
+            <stringProp name="params">{&quot;paramName&quot;:&quot;paramValue&quot;}</stringProp>
+            <boolProp name="recordQueryResults">false</boolProp>
+            <stringProp name="accessMode">WRITE</stringProp>
+            <stringProp name="database">neo4j</stringProp>
+            <intProp name="txTimeout">60</intProp>
+          </BoltSampler>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+      <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+      <ResultCollector guiclass="StatVisualizer" testclass="ResultCollector" testname="Aggregate Report">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>

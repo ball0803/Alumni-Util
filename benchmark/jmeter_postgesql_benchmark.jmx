@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Test Plan">
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+        <collectionProp name="Arguments.arguments"/>
+      </elementProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+    </TestPlan>
+    <hashTree>
+      <JDBCDataSource guiclass="TestBeanGUI" testclass="JDBCDataSource" testname="JDBC Connection Configuration">
+        <stringProp name="dataSource">alumni</stringProp>
+        <stringProp name="poolMax">0</stringProp>
+        <stringProp name="timeout">10000</stringProp>
+        <stringProp name="trimInterval">60000</stringProp>
+        <boolProp name="autocommit">true</boolProp>
+        <stringProp name="transactionIsolation">DEFAULT</stringProp>
+        <boolProp name="preinit">false</boolProp>
+        <stringProp name="initQuery"></stringProp>
+        <boolProp name="keepAlive">true</boolProp>
+        <stringProp name="connectionAge">5000</stringProp>
+        <stringProp name="checkQuery"></stringProp>
+        <stringProp name="dbUrl">jdbc:postgresql://localhost:5432/postgres</stringProp>
+        <stringProp name="driver">org.postgresql.Driver</stringProp>
+        <stringProp name="username">postgres</stringProp>
+        <stringProp name="password">CQ.NSYed9rjmZEyHf9qx/X,\z</stringProp>
+        <stringProp name="connectionProperties"></stringProp>
+      </JDBCDataSource>
+      <hashTree/>
+      <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CSV Data Set Config">
+        <stringProp name="delimiter">,</stringProp>
+        <stringProp name="fileEncoding">UTF-8</stringProp>
+        <stringProp name="filename">C:/Program Files/apache-jmeter-5.6.3/bin/random_variable.csv</stringProp>
+        <boolProp name="ignoreFirstLine">false</boolProp>
+        <boolProp name="quotedData">false</boolProp>
+        <boolProp name="recycle">true</boolProp>
+        <stringProp name="shareMode">shareMode.all</stringProp>
+        <boolProp name="stopThread">false</boolProp>
+        <stringProp name="variableNames">post_id, user_id</stringProp>
+      </CSVDataSet>
+      <hashTree/>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group" enabled="true">
+        <intProp name="ThreadGroup.num_threads">10</intProp>
+        <intProp name="ThreadGroup.ramp_time">60</intProp>
+        <longProp name="ThreadGroup.duration">300</longProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+        <boolProp name="ThreadGroup.scheduler">true</boolProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
+          <intProp name="LoopController.loops">-1</intProp>
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <RandomController guiclass="RandomControlGui" testclass="RandomController" testname="Random Normal Controller" enabled="true">
+          <intProp name="InterleaveControl.style">1</intProp>
+        </RandomController>
+        <hashTree>
+          <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="All Post" enabled="true">
+            <stringProp name="dataSource">alumni</stringProp>
+            <stringProp name="query">SELECT up.*, up2.first_name_eng, up2.last_name_eng, up2.admit_year
+FROM &quot;UserPost&quot; up
+JOIN &quot;UserProfile&quot; up2 ON up.user_id = up2.id
+WHERE visibility = &apos;public&apos;;</stringProp>
+            <stringProp name="queryArguments"></stringProp>
+            <stringProp name="queryArgumentsTypes"></stringProp>
+            <stringProp name="queryTimeout"></stringProp>
+            <stringProp name="queryType">Select Statement</stringProp>
+            <stringProp name="resultSetHandler">Store as String</stringProp>
+            <stringProp name="resultSetMaxRows"></stringProp>
+            <stringProp name="resultVariable"></stringProp>
+            <stringProp name="variableNames"></stringProp>
+          </JDBCSampler>
+          <hashTree/>
+          <TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="Get Post" enabled="true">
+            <boolProp name="TransactionController.includeTimers">false</boolProp>
+          </TransactionController>
+          <hashTree>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Get Certain Post" enabled="true">
+              <stringProp name="dataSource">alumni</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="query">SELECT
+    p.id as post_id,
+    p.text as post_text,
+    p.created_timestamp as post_created,
+    p.updated_timestamp as post_updated,
+    u.first_name as author_first_name,
+    u.last_name as author_last_name
+FROM
+    &quot;UserPost&quot; p
+LEFT JOIN
+    &quot;UserProfile&quot; u ON p.user_id = u.id
+WHERE
+    p.id = ${post_id};</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="queryTimeout"></stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultSetHandler">Store as String</stringProp>
+            </JDBCSampler>
+            <hashTree/>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Get Post Comment" enabled="true">
+              <stringProp name="dataSource">alumni</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="query">SELECT
+    c.id as comment_id,
+    c.text,
+    c.created_timestamp as comment_created,
+    u.first_name,
+    u.last_name
+FROM
+    &quot;PostComment&quot; c
+LEFT JOIN
+    &quot;UserProfile&quot; u ON c.user_id = u.id
+WHERE
+    c.post_id = ${post_id};</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="queryTimeout"></stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultSetHandler">Store as String</stringProp>
+            </JDBCSampler>
+            <hashTree/>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Get Post Like" enabled="true">
+              <stringProp name="dataSource">alumni</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="query">SELECT
+    u.first_name,
+    u.last_name,
+    l.timestamp
+FROM
+    &quot;PostLike&quot; l
+LEFT JOIN
+    &quot;UserProfile&quot; u ON l.user_id = u.id
+WHERE
+    l.post_id = ${post_id};</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="queryTimeout"></stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultSetHandler">Store as String</stringProp>
+            </JDBCSampler>
+            <hashTree/>
+          </hashTree>
+          <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Get User by Admit year" enabled="true">
+            <stringProp name="dataSource">alumni</stringProp>
+            <stringProp name="queryType">Select Statement</stringProp>
+            <stringProp name="query">SELECT *
+FROM &quot;UserProfile&quot; up
+WHERE admit_year = ${random_year} AND education_level = &apos;ปริญญาตรี&apos;;
+</stringProp>
+            <stringProp name="queryArguments"></stringProp>
+            <stringProp name="queryArgumentsTypes"></stringProp>
+            <stringProp name="variableNames"></stringProp>
+            <stringProp name="resultVariable"></stringProp>
+            <stringProp name="queryTimeout"></stringProp>
+            <stringProp name="resultSetMaxRows"></stringProp>
+            <stringProp name="resultSetHandler">Store as String</stringProp>
+          </JDBCSampler>
+          <hashTree/>
+          <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Get User Message" enabled="true">
+            <stringProp name="dataSource">alumni</stringProp>
+            <stringProp name="queryType">Select Statement</stringProp>
+            <stringProp name="query">SELECT
+    um.src_user_id,
+    um.dest_user_id,
+    COUNT(um.id) AS message_count,
+    ARRAY_AGG(um.text) AS messages,
+    MIN(um.created_timestamp) AS first_message_time,
+    MAX(um.created_timestamp) AS last_message_time
+FROM
+    &quot;UserMessage&quot; um
+WHERE
+    (um.src_user_id = ${user_id} OR um.dest_user_id = ${user_id})
+GROUP BY
+    um.src_user_id, um.dest_user_id
+ORDER BY
+    last_message_time;</stringProp>
+            <stringProp name="queryArguments"></stringProp>
+            <stringProp name="queryArgumentsTypes"></stringProp>
+            <stringProp name="variableNames"></stringProp>
+            <stringProp name="resultVariable"></stringProp>
+            <stringProp name="queryTimeout"></stringProp>
+            <stringProp name="resultSetMaxRows"></stringProp>
+            <stringProp name="resultSetHandler">Store as String</stringProp>
+          </JDBCSampler>
+          <hashTree/>
+        </hashTree>
+        <RandomController guiclass="RandomControlGui" testclass="RandomController" testname="Random Graph Controller" enabled="false">
+          <intProp name="InterleaveControl.style">1</intProp>
+        </RandomController>
+        <hashTree>
+          <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Get Friend of the Friend" enabled="true">
+            <stringProp name="dataSource">alumni</stringProp>
+            <stringProp name="queryType">Select Statement</stringProp>
+            <stringProp name="query">WITH direct_friends AS (
+	SELECT f.user1_id AS friend_id
+	FROM &quot;UserFriend&quot; f
+	WHERE f.user2_id = ${user_id}
+	UNION
+	SELECT f.user2_id AS friend_id
+	FROM &quot;UserFriend&quot; f
+	WHERE f.user1_id = ${user_id}
+),
+foaf AS (
+    SELECT f.user1_id AS foaf_id
+    FROM &quot;UserFriend&quot; f
+    JOIN direct_friends df ON f.user2_id = df.friend_id
+    UNION
+    SELECT f.user2_id AS foaf_id
+    FROM &quot;UserFriend&quot; f
+    JOIN direct_friends df ON f.user1_id = df.friend_id
+)
+SELECT foaf_id
+FROM foaf
+WHERE foaf_id NOT IN (SELECT friend_id FROM direct_friends)
+  AND foaf_id != ${user_id};</stringProp>
+            <stringProp name="queryArguments"></stringProp>
+            <stringProp name="queryArgumentsTypes"></stringProp>
+            <stringProp name="variableNames"></stringProp>
+            <stringProp name="resultVariable"></stringProp>
+            <stringProp name="queryTimeout"></stringProp>
+            <stringProp name="resultSetMaxRows"></stringProp>
+            <stringProp name="resultSetHandler">Store as String</stringProp>
+          </JDBCSampler>
+          <hashTree/>
+          <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Get Shortest path to another user" enabled="true">
+            <stringProp name="dataSource">alumni</stringProp>
+            <stringProp name="queryType">Select Statement</stringProp>
+            <stringProp name="query">WITH RECURSIVE search_path(start_id, friend_id, path, depth) AS (
+    -- Base case: direct friends of the start user
+    SELECT ${user_id} AS start_id,
+           CASE 
+               WHEN user1_id = ${user_id} THEN user2_id 
+               ELSE user1_id 
+           END AS friend_id,
+           ARRAY[${user_id}, CASE WHEN user1_id = ${user_id} THEN user2_id ELSE user1_id END] AS path,
+           1 AS depth
+    FROM &quot;UserFriend&quot;
+    WHERE ${user_id} IN (user1_id, user2_id)
+
+    UNION ALL
+
+    -- Recursive case: friends of friends
+    SELECT sp.start_id,
+           CASE 
+               WHEN uf.user1_id = sp.friend_id THEN uf.user2_id 
+               ELSE uf.user1_id 
+           END AS friend_id,
+           sp.path || CASE WHEN uf.user1_id = sp.friend_id THEN uf.user2_id ELSE uf.user1_id END AS path,
+           sp.depth + 1 AS depth
+    FROM search_path sp
+    JOIN &quot;UserFriend&quot; uf ON (uf.user1_id = sp.friend_id OR uf.user2_id = sp.friend_id)
+    WHERE NOT (CASE WHEN uf.user1_id = sp.friend_id THEN uf.user2_id ELSE uf.user1_id END = ANY(sp.path))
+      AND array_length(sp.path, 1) &lt; 6
+)
+SELECT *
+FROM search_path
+WHERE friend_id = 378035
+ORDER BY depth
+LIMIT 1;
+</stringProp>
+            <stringProp name="queryArguments"></stringProp>
+            <stringProp name="queryArgumentsTypes"></stringProp>
+            <stringProp name="variableNames"></stringProp>
+            <stringProp name="resultVariable"></stringProp>
+            <stringProp name="queryTimeout"></stringProp>
+            <stringProp name="resultSetMaxRows"></stringProp>
+            <stringProp name="resultSetHandler">Store as String</stringProp>
+          </JDBCSampler>
+          <hashTree/>
+          <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Recommend a post" enabled="true">
+            <stringProp name="dataSource">alumni</stringProp>
+            <stringProp name="queryType">Select Statement</stringProp>
+            <stringProp name="query">WITH friends_of_user AS (
+    -- Get all friends of the user (user_id 931186)
+    SELECT uf.user1_id AS friend_id
+    FROM &quot;UserFriend&quot; uf
+    WHERE uf.user2_id = ${user_id}
+    
+    UNION
+    
+    SELECT uf.user2_id AS friend_id
+    FROM &quot;UserFriend&quot; uf
+    WHERE uf.user1_id = ${user_id}
+),
+friends_likes AS (
+    -- Get all posts liked by user&apos;s friends
+    SELECT l.post_id, COUNT(l.user_id) AS friend_likes
+    FROM &quot;PostLike&quot; l
+    JOIN friends_of_user f ON l.user_id = f.friend_id
+    GROUP BY post_id
+),
+user_likes AS (
+    -- Get all posts liked by the user (user_id 931186)
+    SELECT l.post_id
+    FROM &quot;PostLike&quot; l
+    WHERE l.user_id = ${user_id}
+)
+-- Return posts liked by friends but not by the user
+SELECT p.id, fl.friend_likes
+FROM friends_likes fl
+JOIN &quot;UserPost&quot; p ON fl.post_id = p.id
+LEFT JOIN user_likes ul ON ul.post_id = p.id
+WHERE ul.post_id IS NULL
+ORDER BY fl.friend_likes DESC;</stringProp>
+            <stringProp name="queryArguments"></stringProp>
+            <stringProp name="queryArgumentsTypes"></stringProp>
+            <stringProp name="variableNames"></stringProp>
+            <stringProp name="resultVariable"></stringProp>
+            <stringProp name="queryTimeout"></stringProp>
+            <stringProp name="resultSetMaxRows"></stringProp>
+            <stringProp name="resultSetHandler">Store as String</stringProp>
+          </JDBCSampler>
+          <hashTree/>
+        </hashTree>
+        <RandomVariableConfig guiclass="TestBeanGUI" testclass="RandomVariableConfig" testname="Random Variable" enabled="true">
+          <stringProp name="maximumValue">2564</stringProp>
+          <stringProp name="minimumValue">2533</stringProp>
+          <stringProp name="outputFormat">0000</stringProp>
+          <boolProp name="perThread">true</boolProp>
+          <stringProp name="randomSeed"></stringProp>
+          <stringProp name="variableName">random_year</stringProp>
+        </RandomVariableConfig>
+        <hashTree/>
+      </hashTree>
+      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+      <ResultCollector guiclass="StatVisualizer" testclass="ResultCollector" testname="Aggregate Report" enabled="true">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+      <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report" enabled="true">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>

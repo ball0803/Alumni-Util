@@ -544,15 +544,11 @@ def send_messages_between_users(users):
 
         # Determine how many messages the sender will initiate based on interaction level
         if interaction_level == 10:  # High interaction
-            message_count = random.randint(
-                5, 10
-            )  # High interaction users send more messages
+            message_count = random.randint(5, 10)
         elif interaction_level == 5:  # Medium interaction
             message_count = random.randint(2, 5)
         else:  # Low interaction
-            message_count = random.randint(
-                0, 2
-            )  # Low interaction users rarely send messages
+            message_count = random.randint(0, 2)
 
         # Generate messages
         for _ in range(message_count):
@@ -593,6 +589,47 @@ def send_messages_between_users(users):
             messages.append(message)  # Append message to the list
 
     return messages
+
+
+def simulate_friend_relationships(users: List[Dict]):
+    friends = []  # To store the relationships
+    max_year_difference = 2  # Allow friendship within admit_year +/- 3 years
+
+    for user in users:
+        user_admit_year = int(user["admit_year"])
+        user_interaction = user["user_interaction"]
+
+        # Get all potential friends within +/- 3 admit_years
+        potential_friends = [
+            other_user
+            for other_user in users
+            if other_user["user_id"] != user["user_id"]  # Skip the same user
+            and abs(int(other_user["admit_year"]) - user_admit_year)
+            <= max_year_difference
+        ]
+
+        for friend in potential_friends:
+
+            if user_interaction == "High":
+                friendship_chance = 0.3
+            elif user_interaction == "Medium":
+                friendship_chance = 0.2
+            else:
+                friendship_chance = 0.05
+
+            # Randomly decide whether to form a friendship
+            if random.random() < friendship_chance:
+                friends.append(
+                    {
+                        "friend_id": str(
+                            fake.unique.random_int(min=111111, max=999999)
+                        ),
+                        "user1_id": user["user_id"],
+                        "user2_id": friend["user_id"],
+                    }
+                )
+
+    return friends
 
 
 # Function to generate graduate year
@@ -749,6 +786,7 @@ def main():
     post_likes, post_comments = simulate_user_engagement(user_post, alumni_user)
     user_messages = send_messages_between_users(alumni_user)
     post_donations, donation_trasactions = create_donation_info(user_post, alumni_user)
+    user_friend = simulate_friend_relationships(alumni_user)
 
     user_profile_df = pd.DataFrame(alumni_user)
     user_posts_df = pd.DataFrame(user_post)
@@ -757,6 +795,7 @@ def main():
     post_donations_df = pd.DataFrame(post_donations)
     donation_trasactions = pd.DataFrame(donation_trasactions)
     user_messages_df = pd.DataFrame(user_messages)
+    user_friend_df = pd.DataFrame(user_friend)
 
     user_profile_df.to_csv("alumni_user.csv", index=False, encoding="utf-8-sig")
     user_posts_df.to_csv("user_post.csv", index=False, encoding="utf-8-sig")
@@ -767,6 +806,7 @@ def main():
         "donation_transactions.csv", index=False, encoding="utf-8-sig"
     )
     user_messages_df.to_csv("user_interaction.csv", index=False, encoding="utf-8-sig")
+    user_friend_df.to_csv("user_friend.csv", index=False, encoding="utf-8-sig")
 
 
 if __name__ == "__main__":
